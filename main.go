@@ -1,13 +1,20 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"time"
 )
 
+const shortDuration = 1 * time.Second
+
 func main() {
+	ctx := context.Background()
 	start := time.Now()
 	in := make(chan string)
+
+	ctx, cancel := context.WithTimeout(ctx, 2000000000)
+	defer cancel()
 
 	go task1(in)
 	go task2(in)
@@ -15,11 +22,11 @@ func main() {
 
 	for i := 0; i < 3; i++ {
 		select {
-		case <-time.After(2 * time.Second):
-			fmt.Println("time out")
-			return
 		case val := <-in:
 			fmt.Println(val)
+		case <-ctx.Done():
+			fmt.Println("Timeout")
+			return
 		}
 	}
 
@@ -31,7 +38,7 @@ func main() {
 
 func task1(ch chan string) {
 	fmt.Println("Starting task 1 ...")
-	time.Sleep(4 * time.Second)
+	time.Sleep(3 * time.Second)
 	fmt.Println("Task 1 finished")
 	ch <- "Task 1"
 }
