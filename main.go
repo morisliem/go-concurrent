@@ -11,7 +11,8 @@ const shortDuration = 1 * time.Second
 func main() {
 	ctx := context.Background()
 	start := time.Now()
-	in := make(chan string)
+	in := make(chan string, 3)
+	defer close(in)
 
 	ctx, cancel := context.WithTimeout(ctx, 2000000000)
 	defer cancel()
@@ -19,6 +20,16 @@ func main() {
 	go task1(in)
 	go task2(in)
 	go task3(in)
+
+	// for i := range in {
+	// 	select {
+	// 	case <-in:
+	// 		fmt.Println(i)
+	// 	case <-ctx.Done():
+	// 		fmt.Println("timeout")
+	// 		return
+	// 	}
+	// }
 
 	for i := 0; i < 3; i++ {
 		select {
@@ -30,29 +41,27 @@ func main() {
 		}
 	}
 
-	close(in)
-
 	finish := time.Since(start)
 	fmt.Println(finish)
 }
 
-func task1(ch chan string) {
+func task1(ch chan<- string) {
 	fmt.Println("Starting task 1 ...")
 	time.Sleep(3 * time.Second)
 	fmt.Println("Task 1 finished")
 	ch <- "Task 1"
 }
 
-func task2(ch chan string) {
+func task2(ch chan<- string) {
 	fmt.Println("Starting task 2 ...")
-	time.Sleep(2 * time.Second)
+	time.Sleep(3 * time.Second)
 	fmt.Println("Task 2 finished")
 	ch <- "Task 2"
 }
 
-func task3(ch chan string) {
+func task3(ch chan<- string) {
 	fmt.Println("Starting task 3 ...")
-	time.Sleep(1 * time.Second)
+	time.Sleep(3 * time.Second)
 	fmt.Println("Task 3 finished")
 	ch <- "Task 3"
 }
